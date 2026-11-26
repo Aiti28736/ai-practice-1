@@ -16,8 +16,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,7 +30,7 @@ fun ExpenseEntryScreen(
     viewModel: ExpenseEntryViewModel,
     modifier: Modifier = Modifier
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     ExpenseEntryContent(
         state = state,
         canSave = viewModel.canSave(),
@@ -90,7 +90,9 @@ private fun ExpenseEntryContent(
             value = state.memo,
             onValueChange = onMemoChange,
             label = { Text("メモ（任意）") },
-            supportingText = { Text("${state.memo.length}/40") },
+            supportingText = {
+                Text("${state.memo.length}/${ExpenseEntryConstraints.MAX_MEMO_LENGTH}")
+            },
             singleLine = true,
             enabled = !state.isSaving,
             modifier = Modifier.fillMaxWidth()
@@ -121,7 +123,7 @@ private fun ExpenseEntryContent(
 private fun ExpenseEntryPreview() {
     ExpenseEntryContent(
         state = ExpenseEntryUiState(
-            amountText = "1,280",
+            amountText = "1280",
             selectedCategory = "食費",
             memo = "昼食"
         ),

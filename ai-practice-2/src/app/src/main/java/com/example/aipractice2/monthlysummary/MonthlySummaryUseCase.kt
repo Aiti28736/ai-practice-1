@@ -1,13 +1,14 @@
 package com.example.aipractice2.monthlysummary
 
 import java.time.YearMonth
+import javax.inject.Inject
 
 interface MonthlySummaryUseCase {
     suspend fun getSummary(month: YearMonth): MonthlySummary?
 }
 
-class MonthlySummaryUseCaseImpl(
-    private val repository: MonthlySummaryRepository = MonthlySummaryRepositoryImpl()
+class MonthlySummaryUseCaseImpl @Inject constructor(
+    private val repository: MonthlySummaryRepository
 ) : MonthlySummaryUseCase {
     override suspend fun getSummary(month: YearMonth): MonthlySummary? {
         val expenses = repository.fetchExpenses(month) ?: return null

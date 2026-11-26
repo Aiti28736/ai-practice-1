@@ -2,8 +2,9 @@ package com.example.aipractice2.monthlysummary
 
 import kotlinx.coroutines.delay
 import java.time.YearMonth
+import javax.inject.Inject
 
-class MonthlySummaryApiService {
+class MonthlySummaryApiService @Inject constructor() {
     suspend fun fetchExpenses(month: YearMonth): List<MonthlyExpenseRecord> {
         delay(180)
         if (month != YearMonth.now()) return emptyList()

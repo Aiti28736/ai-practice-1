@@ -14,44 +14,39 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.text.NumberFormat
+import java.util.Locale
 
 @Composable
 fun MonthlySummaryScreen(
     viewModel: MonthlySummaryViewModel,
     modifier: Modifier = Modifier
 ) {
-    val state by viewModel.uiState.collectAsState()
-    // 表示対象の月を保持する
-    var selectedMonth by remember { mutableStateOf(YearMonth.now()) }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(selectedMonth) {
-        viewModel.load(selectedMonth)
+    LaunchedEffect(Unit) {
+        viewModel.load()
     }
 
     MonthlySummaryContent(
-        selectedMonth = selectedMonth,
         state = state,
-        onPreviousMonth = { selectedMonth = selectedMonth.minusMonths(1) },
-        onNextMonth = { selectedMonth = selectedMonth.plusMonths(1) },
-        onRetry = { viewModel.load(selectedMonth) },
+        onPreviousMonth = viewModel::showPreviousMonth,
+        onNextMonth = viewModel::showNextMonth,
+        onRetry = viewModel::retry,
         modifier = modifier
     )
 }
 
 @Composable
 private fun MonthlySummaryContent(
-    selectedMonth: YearMonth,
     state: MonthlySummaryUiState,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
@@ -72,7 +67,7 @@ private fun MonthlySummaryContent(
             OutlinedButton(onClick = onPreviousMonth) {
                 Text("前月")
             }
-            Text(text = selectedMonth.format(DateTimeFormatter.ofPattern("yyyy年M月")))
+            Text(text = state.selectedMonth.format(DateTimeFormatter.ofPattern("yyyy年M月")))
             OutlinedButton(onClick = onNextMonth) {
                 Text("翌月")
             }
@@ -88,7 +83,7 @@ private fun MonthlySummaryContent(
             }
             state.summary != null -> {
                 Text(text = "合計支出")
-                Text(text = "¥${state.summary.totalAmount}")
+                Text(text = formatYen(state.summary.totalAmount))
                 HorizontalDivider()
                 if (state.summary.categories.isEmpty()) {
                     Text(text = "この月の支出はありません")
@@ -99,7 +94,7 @@ private fun MonthlySummaryContent(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(text = category.category)
-                            Text(text = "¥${category.amount}")
+                            Text(text = formatYen(category.amount))
                         }
                     }
                 }
@@ -108,12 +103,15 @@ private fun MonthlySummaryContent(
     }
 }
 
+internal fun formatYen(amount: Int): String =
+    "${NumberFormat.getIntegerInstance(Locale.JAPAN).format(amount)}円"
+
 @Preview(showBackground = true)
 @Composable
 private fun MonthlySummaryPreview() {
     MonthlySummaryContent(
-        selectedMonth = YearMonth.now(),
         state = MonthlySummaryUiState(
+            selectedMonth = YearMonth.now(),
             summary = MonthlySummary(
                 month = YearMonth.now(),
                 totalAmount = 5780,

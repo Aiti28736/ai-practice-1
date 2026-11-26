@@ -2,10 +2,12 @@ package com.example.aipractice2.expenseentry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class ExpenseEntryUiState(
     val amountText: String = "",
@@ -16,14 +18,15 @@ data class ExpenseEntryUiState(
     val errorMessage: String? = null
 )
 
-class ExpenseEntryViewModel(
-    private val useCase: ExpenseEntryUseCase = ExpenseEntryUseCaseImpl()
+@HiltViewModel
+class ExpenseEntryViewModel @Inject constructor(
+    private val useCase: ExpenseEntryUseCase
 ) : ViewModel() {
-    // 画面に表示する状態を保持する
     private val _uiState = MutableStateFlow(ExpenseEntryUiState())
     val uiState: StateFlow<ExpenseEntryUiState> = _uiState.asStateFlow()
 
     fun updateAmount(amountText: String) {
+        if (amountText.any { it !in '0'..'9' }) return
         _uiState.value = _uiState.value.copy(
             amountText = amountText,
             isSaved = false,
@@ -41,7 +44,7 @@ class ExpenseEntryViewModel(
 
     fun updateMemo(memo: String) {
         _uiState.value = _uiState.value.copy(
-            memo = memo,
+            memo = memo.take(ExpenseEntryConstraints.MAX_MEMO_LENGTH),
             isSaved = false,
             errorMessage = null
         )
@@ -49,10 +52,9 @@ class ExpenseEntryViewModel(
 
     fun canSave(): Boolean {
         val state = _uiState.value
-        val amount = state.amountText.toIntOrNull() ?: return false
-        return amount > 0 &&
+        return useCase.isAmountValid(state.amountText) &&
             state.selectedCategory.isNotBlank() &&
-            state.memo.length <= 40 &&
+            useCase.isMemoValid(state.memo) &&
             !state.isSaving
     }
 

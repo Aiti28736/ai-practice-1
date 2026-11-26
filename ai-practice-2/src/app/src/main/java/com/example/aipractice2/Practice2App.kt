@@ -8,7 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.padding
@@ -18,28 +18,38 @@ import com.example.aipractice2.expenseentry.ExpenseEntryViewModel
 import com.example.aipractice2.monthlysummary.MonthlySummaryScreen
 import com.example.aipractice2.monthlysummary.MonthlySummaryViewModel
 
+private enum class PracticeScreen {
+    ExpenseEntry,
+    MonthlySummary
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Practice2App(
     expenseEntryViewModel: ExpenseEntryViewModel,
     monthlySummaryViewModel: MonthlySummaryViewModel
 ) {
-    var selectedScreen by rememberSaveable { mutableIntStateOf(0) }
-    val title = if (selectedScreen == 0) "支出登録" else "月次サマリー"
+    var selectedScreen by rememberSaveable {
+        mutableStateOf(PracticeScreen.ExpenseEntry)
+    }
+    val title = when (selectedScreen) {
+        PracticeScreen.ExpenseEntry -> "支出登録"
+        PracticeScreen.MonthlySummary -> "月次サマリー"
+    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(title) }) },
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    selected = selectedScreen == 0,
-                    onClick = { selectedScreen = 0 },
+                    selected = selectedScreen == PracticeScreen.ExpenseEntry,
+                    onClick = { selectedScreen = PracticeScreen.ExpenseEntry },
                     icon = { Text("¥") },
                     label = { Text("支出登録") }
                 )
                 NavigationBarItem(
-                    selected = selectedScreen == 1,
-                    onClick = { selectedScreen = 1 },
+                    selected = selectedScreen == PracticeScreen.MonthlySummary,
+                    onClick = { selectedScreen = PracticeScreen.MonthlySummary },
                     icon = { Text("月") },
                     label = { Text("月次サマリー") }
                 )
@@ -47,11 +57,11 @@ fun Practice2App(
         }
     ) { innerPadding ->
         when (selectedScreen) {
-            0 -> ExpenseEntryScreen(
+            PracticeScreen.ExpenseEntry -> ExpenseEntryScreen(
                 viewModel = expenseEntryViewModel,
                 modifier = Modifier.padding(innerPadding)
             )
-            else -> MonthlySummaryScreen(
+            PracticeScreen.MonthlySummary -> MonthlySummaryScreen(
                 viewModel = monthlySummaryViewModel,
                 modifier = Modifier.padding(innerPadding)
             )
